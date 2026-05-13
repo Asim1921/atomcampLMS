@@ -124,4 +124,49 @@ export async function tutorStream(
   }
 }
 
+export type QuizGenEvent =
+  | { stage: "started"; provider: "ollama" | "gemini" | "static"; total: number }
+  | { stage: "progress"; current: number; total: number }
+  | { stage: "thinking" }
+  | { stage: "done"; questions: { id: string; prompt: string; choices: { id: string; text: string }[] }[] }
+  | { stage: "error"; detail?: string };
+
+export async function diagnosticStream(
+  goal: string,
+  onEvent: (e: QuizGenEvent) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  const res = await fetch(`${API}/api/onboarding/diagnostic/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream", ...authHeaders() },
+    body: JSON.stringify({ goal }),
+    signal,
+  });
+  if (!res.ok || !res.body) throw new Error("Failed to start diagnostic stream.");
+
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += dec.decode(value, { stream: true });
+    // SSE events are separated by blank lines. Parse out each `data:` payload.
+    let idx: number;
+    while ((idx = buffer.indexOf("\n\n")) !== -1) {
+      const raw = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      const line = raw.split("\n").find((l) => l.startsWith("data:"));
+      if (!line) continue;
+      const payload = line.slice(5).trim();
+      if (!payload) continue;
+      try {
+        onEvent(JSON.parse(payload) as QuizGenEvent);
+      } catch {
+        /* ignore malformed chunk */
+      }
+    }
+  }
+}
+
 export { API };

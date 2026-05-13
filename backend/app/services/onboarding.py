@@ -12,6 +12,7 @@ import json
 import logging
 import re
 import uuid
+from collections.abc import AsyncIterator
 
 from sqlalchemy.orm import Session
 
@@ -140,6 +141,96 @@ async def generate_diagnostic_quiz(goal: str) -> dict:
     # 3) Deterministic backup so the UI never hangs.
     logger.warning("[QUIZ] ► STATIC FALLBACK for interest=%r", goal_clean[:80])
     return _fallback_quiz(goal_clean)
+
+
+_TOTAL_QUESTIONS = 5
+
+
+async def generate_diagnostic_quiz_stream(goal: str) -> AsyncIterator[dict]:
+    """Same provider precedence as `generate_diagnostic_quiz`, but emits progress events.
+
+    Event shapes (every event is a dict):
+      {"stage": "started",   "provider": "ollama" | "gemini" | "static", "total": 5}
+      {"stage": "progress",  "current": 0..5, "total": 5}
+      {"stage": "thinking"}                 # used when the provider can't stream
+      {"stage": "done",      "questions": [...]}
+      {"stage": "error",     "detail": "..."}
+
+    The frontend uses `current/total` to drive a real progress bar when Ollama
+    is the provider; for Gemini/static the bar shows an indeterminate state
+    until the final `done` event.
+    """
+    goal_clean = (goal or "").strip()[:2000]
+    if not goal_clean:
+        yield {"stage": "started", "provider": "static", "total": _TOTAL_QUESTIONS}
+        yield {"stage": "done", "questions": _fallback_quiz("")["questions"]}
+        return
+
+    user_msg = (
+        "The learner stated this INTEREST / GOAL — every one of the 5 questions must probe this exact domain "
+        "(use vocabulary and examples from that field, not generic programming):\n\n"
+        f'"""{goal_clean}"""\n\n'
+        "Return EXACTLY 5 diagnostic questions as a JSON object matching the schema in your system instructions."
+    )
+
+    # 1) Ollama streaming path — preferred.
+    if await olm.is_available():
+        logger.info("[QUIZ/stream] ► Ollama — interest=%r", goal_clean[:80])
+        yield {"stage": "started", "provider": "ollama", "total": _TOTAL_QUESTIONS}
+        last_seen = 0
+        last_event: dict | None = None
+        async for ev in olm.stream_json(ONBOARDING_QUIZ_SYSTEM, user_msg, temperature=0.35, num_predict=3072):
+            last_event = ev
+            if ev.get("type") == "delta":
+                # Each diagnostic question contains exactly one `"choices":` key —
+                # counting it in the running buffer is a reliable 0→5 progress signal.
+                count = ev["accumulated"].count('"choices"')
+                if count > last_seen:
+                    last_seen = min(count, _TOTAL_QUESTIONS)
+                    yield {"stage": "progress", "current": last_seen, "total": _TOTAL_QUESTIONS}
+            elif ev.get("type") == "error":
+                logger.warning("[QUIZ/stream] Ollama error: %s — falling back", ev.get("detail"))
+                break
+
+        if last_event and last_event.get("type") == "done":
+            normalized = _normalize_diagnostic_quiz(last_event.get("object"))
+            if not normalized:
+                # Last-chance parse of the raw accumulated buffer.
+                normalized = _normalize_diagnostic_quiz(_extract_json_object(last_event.get("raw") or ""))
+            if normalized:
+                logger.info("[QUIZ/stream] ✓ Ollama produced %d questions", len(normalized["questions"]))
+                yield {"stage": "progress", "current": _TOTAL_QUESTIONS, "total": _TOTAL_QUESTIONS}
+                yield {"stage": "done", "questions": normalized["questions"]}
+                return
+            logger.warning("[QUIZ/stream] Ollama output didn't validate — falling through to Gemini")
+    else:
+        logger.warning("[QUIZ/stream] Ollama not reachable — falling through to Gemini")
+
+    # 2) Gemini (non-streaming) — emit a single "thinking" pulse then the result.
+    if gem.is_available():
+        logger.info("[QUIZ/stream] ► Gemini — interest=%r", goal_clean[:80])
+        yield {"stage": "started", "provider": "gemini", "total": _TOTAL_QUESTIONS}
+        yield {"stage": "thinking"}
+        data = await gem.complete_json(ONBOARDING_QUIZ_SYSTEM, user_msg, temperature=0.35, max_output_tokens=4096)
+        normalized = _normalize_diagnostic_quiz(data)
+        if not normalized:
+            raw = await gem.complete_text(
+                ONBOARDING_QUIZ_SYSTEM,
+                user_msg + "\n\nOutput a single JSON object only. No markdown fences.",
+                temperature=0.25,
+                max_output_tokens=4096,
+            )
+            normalized = _normalize_diagnostic_quiz(_extract_json_object(raw or ""))
+        if normalized:
+            logger.info("[QUIZ/stream] ✓ Gemini produced %d questions", len(normalized["questions"]))
+            yield {"stage": "done", "questions": normalized["questions"]}
+            return
+        logger.warning("[QUIZ/stream] Gemini invalid — using static fallback")
+
+    # 3) Static last-resort.
+    logger.warning("[QUIZ/stream] ► STATIC FALLBACK for interest=%r", goal_clean[:80])
+    yield {"stage": "started", "provider": "static", "total": _TOTAL_QUESTIONS}
+    yield {"stage": "done", "questions": _fallback_quiz(goal_clean)["questions"]}
 
 
 async def score_onboarding(

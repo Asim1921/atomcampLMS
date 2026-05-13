@@ -8,9 +8,14 @@ import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth-guard";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { API, apiPost, getToken } from "@/lib/api";
+import { apiPost, diagnosticStream } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth";
 import type { LearnerDNA, QuizQuestion } from "@/lib/types";
+
+type GenProgress =
+  | { kind: "idle" }
+  | { kind: "indeterminate"; label: string }
+  | { kind: "determinate"; current: number; total: number; label: string };
 
 export default function OnboardingPage() {
   return (
@@ -29,6 +34,7 @@ function OnboardingInner() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [dna, setDna] = useState<LearnerDNA | null>(null);
+  const [progress, setProgress] = useState<GenProgress>({ kind: "idle" });
 
   // Skip onboarding entirely if the linked learner profile is already completed.
   useEffect(() => {
@@ -37,20 +43,46 @@ function OnboardingInner() {
 
   const startMut = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API}/api/onboarding/diagnostic`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
-        },
-        body: JSON.stringify({ goal }),
+      let finalQuestions: QuizQuestion[] = [];
+      setProgress({ kind: "indeterminate", label: "Contacting model…" });
+      await diagnosticStream(goal, (e) => {
+        if (e.stage === "started") {
+          const label =
+            e.provider === "ollama"
+              ? "Generating with local Ollama model…"
+              : e.provider === "gemini"
+                ? "Generating with Gemini…"
+                : "Preparing diagnostic…";
+          setProgress(
+            e.provider === "ollama"
+              ? { kind: "determinate", current: 0, total: e.total, label }
+              : { kind: "indeterminate", label },
+          );
+        } else if (e.stage === "progress") {
+          setProgress({
+            kind: "determinate",
+            current: e.current,
+            total: e.total,
+            label: `Generating question ${Math.min(e.current + (e.current < e.total ? 1 : 0), e.total)} of ${e.total}…`,
+          });
+        } else if (e.stage === "thinking") {
+          setProgress({ kind: "indeterminate", label: "Thinking…" });
+        } else if (e.stage === "done") {
+          finalQuestions = e.questions;
+        } else if (e.stage === "error") {
+          throw new Error(e.detail || "Quiz generation failed.");
+        }
       });
-      if (!res.ok) throw new Error("Failed to generate quiz.");
-      return res.json() as Promise<{ questions: QuizQuestion[] }>;
+      if (!finalQuestions.length) throw new Error("No questions returned.");
+      return { questions: finalQuestions };
     },
     onSuccess: (data) => {
       setQuestions(data.questions || []);
+      setProgress({ kind: "idle" });
       setStep("quiz");
+    },
+    onError: () => {
+      setProgress({ kind: "idle" });
     },
   });
 
@@ -115,6 +147,9 @@ function OnboardingInner() {
                   </>
                 )}
               </Button>
+              {startMut.isPending && progress.kind !== "idle" && (
+                <QuizGenProgress progress={progress} />
+              )}
               {startMut.isError && (
                 <p className="text-sm text-atom-danger">{(startMut.error as Error).message}</p>
               )}
@@ -200,6 +235,39 @@ function OnboardingInner() {
           Skip for now — I&apos;ll do this later
         </button>
       </div>
+    </div>
+  );
+}
+
+function QuizGenProgress({ progress }: { progress: GenProgress }) {
+  if (progress.kind === "idle") return null;
+  const pct =
+    progress.kind === "determinate"
+      ? Math.round((progress.current / Math.max(progress.total, 1)) * 100)
+      : null;
+  return (
+    <div className="rounded-xl border border-atom-border/60 bg-atom-deep/50 p-3">
+      <div className="flex items-center justify-between text-xs text-atom-muted">
+        <span>{progress.label}</span>
+        {pct !== null && <span className="font-mono text-atom-text">{pct}%</span>}
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-atom-border/40">
+        {pct !== null ? (
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-atom-accent to-cyan-400 transition-[width] duration-300 ease-out"
+            style={{ width: `${pct}%` }}
+          />
+        ) : (
+          <div className="indeterminate-bar h-full w-full">
+            <span />
+          </div>
+        )}
+      </div>
+      {progress.kind === "determinate" && (
+        <p className="mt-1.5 text-[11px] text-atom-muted">
+          {progress.current} of {progress.total} questions ready
+        </p>
+      )}
     </div>
   );
 }

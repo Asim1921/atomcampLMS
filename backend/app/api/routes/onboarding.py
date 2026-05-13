@@ -1,10 +1,17 @@
+import json
+
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.ai import DiagnosticCompleteRequest, DiagnosticStartRequest
 from app.schemas.learners import LearnerDNAOut
-from app.services.onboarding import generate_diagnostic_quiz, score_onboarding
+from app.services.onboarding import (
+    generate_diagnostic_quiz,
+    generate_diagnostic_quiz_stream,
+    score_onboarding,
+)
 from app.services.risk_predictor import at_risk_probability
 
 router = APIRouter()
@@ -35,6 +42,32 @@ def _dna_out(learner) -> LearnerDNAOut:
 @router.post("/diagnostic")
 async def diagnostic_start(body: DiagnosticStartRequest):
     return await generate_diagnostic_quiz(body.goal)
+
+
+@router.post("/diagnostic/stream")
+async def diagnostic_start_stream(body: DiagnosticStartRequest):
+    """SSE stream of quiz generation progress.
+
+    Emits events of the form `data: {...}\\n\\n` where each payload matches the
+    service-layer event shape (stage=started|progress|thinking|done|error).
+    """
+
+    async def event_iter():
+        try:
+            async for ev in generate_diagnostic_quiz_stream(body.goal):
+                yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+        except Exception as e:  # pragma: no cover — defensive: never break the stream silently.
+            yield f"data: {json.dumps({'stage': 'error', 'detail': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_iter(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # disable proxy buffering so events flush promptly
+        },
+    )
 
 
 @router.post("/diagnostic/complete")

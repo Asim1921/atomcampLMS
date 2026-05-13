@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from collections.abc import AsyncIterator
 from typing import Any
 
 import httpx
@@ -151,3 +152,75 @@ async def complete_json(
     except json.JSONDecodeError:
         pass
     return _extract_first_json_object(raw)
+
+
+async def stream_json(
+    system: str,
+    user: str,
+    *,
+    model: str | None = None,
+    temperature: float = 0.25,
+    num_predict: int = 2048,
+) -> AsyncIterator[dict[str, Any]]:
+    """Stream Ollama JSON-mode output as token deltas.
+
+    Yields events of the shape:
+      {"type": "delta", "text": "...", "accumulated": "..."}
+      {"type": "done",  "object": {...} | None, "raw": "..."}
+      {"type": "error", "detail": "..."}
+
+    Callers can parse the accumulated buffer between deltas to surface progress
+    (e.g. count `"choices":` markers to know how many quiz questions are formed).
+    """
+    base = _base_url()
+    if not base:
+        yield {"type": "error", "detail": "ollama-unavailable"}
+        return
+
+    payload = {
+        "model": model or settings.ollama_model,
+        "stream": True,
+        "format": "json",
+        "options": {"temperature": temperature, "num_predict": num_predict},
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+    }
+
+    accumulated = ""
+    try:
+        async with httpx.AsyncClient(timeout=settings.ollama_timeout_seconds) as c:
+            async with c.stream("POST", f"{base}/api/chat", json=payload) as r:
+                if r.status_code != 200:
+                    body = (await r.aread()).decode("utf-8", errors="replace")[:200]
+                    logger.warning("Ollama stream returned %s: %s", r.status_code, body)
+                    yield {"type": "error", "detail": f"http-{r.status_code}"}
+                    return
+                async for line in r.aiter_lines():
+                    if not line:
+                        continue
+                    try:
+                        chunk = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    msg = chunk.get("message") or {}
+                    delta = msg.get("content")
+                    if isinstance(delta, str) and delta:
+                        accumulated += delta
+                        yield {"type": "delta", "text": delta, "accumulated": accumulated}
+                    if chunk.get("done"):
+                        break
+    except (httpx.HTTPError, OSError) as e:
+        logger.warning("Ollama stream_json failed: %s", e)
+        yield {"type": "error", "detail": str(e)}
+        return
+
+    parsed: dict[str, Any] | None = None
+    try:
+        cand = json.loads(accumulated)
+        if isinstance(cand, dict):
+            parsed = cand
+    except json.JSONDecodeError:
+        parsed = _extract_first_json_object(accumulated)
+    yield {"type": "done", "object": parsed, "raw": accumulated}
