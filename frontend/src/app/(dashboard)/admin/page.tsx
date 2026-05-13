@@ -37,17 +37,17 @@ export default function AdminDashboardPage() {
     })) ?? [];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-atom-text">Admin analytics</h2>
-        <p className="mt-1 max-w-2xl text-sm text-atom-muted">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="min-w-0">
+        <h2 className="text-2xl font-bold tracking-tight text-atom-text sm:text-3xl">Admin analytics</h2>
+        <p className="mt-1 max-w-2xl break-words text-sm text-atom-muted">
           Cohort metrics derived from the SQLite learner store. Weekly insight card uses an LLM when{" "}
-          <code className="rounded bg-atom-panel px-1">OPENAI_API_KEY</code> is set; otherwise a structured fallback
+          <code className="break-all rounded bg-atom-panel px-1">OPENAI_API_KEY</code> is set; otherwise a structured fallback
           summary is shown (still demo-safe).
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {summary.isLoading ? (
           <>
             <Skeleton className="h-24" />
@@ -81,8 +81,8 @@ export default function AdminDashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Cohort completion curve (illustrative)</CardTitle>
             <CardDescription>Synthetic sparkline from learner quiz variance — for dashboard polish.</CardDescription>

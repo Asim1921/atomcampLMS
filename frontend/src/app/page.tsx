@@ -79,7 +79,7 @@ export default function HomePage() {
           </Button>
         </div>
         <p className="mx-auto mt-6 max-w-md text-xs text-atom-muted/80">
-          No credit card. Google sign-in supported. Built end-to-end in 6 hours for the hackathon.
+          No credit card. Built end-to-end in 6 hours for the hackathon.
         </p>
 
         {/* feature grid */}

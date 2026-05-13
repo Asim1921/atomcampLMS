@@ -44,9 +44,9 @@ export default function CatalogPage() {
   const isInstructor = user?.role === "instructor" || user?.role === "admin";
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-atom-accent">Catalog</p>
           <h2 className="text-2xl font-bold tracking-tight text-atom-text sm:text-3xl">
             Browse all courses
@@ -55,15 +55,15 @@ export default function CatalogPage() {
             Hand-curated bootcamps and learner-created tracks. Enroll and your progress feeds your Learner DNA.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {isInstructor && (
-            <Button asChild>
+            <Button asChild className="w-full sm:w-auto">
               <Link href="/instructor/courses/new">
                 <Plus className="h-4 w-4" /> New course
               </Link>
             </Button>
           )}
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href="/me/learning">
               <BookOpen className="h-4 w-4" /> My learning
             </Link>
@@ -71,7 +71,7 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto]">
         <Field
           label="Search"
           placeholder="Search by title, topic, tag…"
@@ -79,14 +79,14 @@ export default function CatalogPage() {
           onChange={(e) => setSearch(e.target.value)}
           icon={<Search className="h-4 w-4" />}
         />
-        <div className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <span className="text-xs font-medium uppercase tracking-wide text-atom-muted">Level</span>
-          <div className="flex h-11 items-center gap-1 rounded-xl border border-atom-border/80 bg-atom-deep/70 p-1">
+          <div className="flex h-11 items-center gap-1 overflow-x-auto rounded-xl border border-atom-border/80 bg-atom-deep/70 p-1 scrollbar-thin">
             {LEVELS.map((l) => (
               <button
                 key={l}
                 onClick={() => setLevel(l)}
-                className={`rounded-lg px-3 py-1.5 text-xs capitalize transition ${
+                className={`shrink-0 rounded-lg px-3 py-1.5 text-xs capitalize transition ${
                   level === l
                     ? "bg-atom-accent text-atom-deep"
                     : "text-atom-muted hover:text-atom-text"
@@ -101,7 +101,7 @@ export default function CatalogPage() {
           <span className="text-xs font-medium uppercase tracking-wide text-atom-muted">Filter</span>
           <button
             onClick={() => setOnlyEnrolled((v) => !v)}
-            className={`flex h-11 items-center rounded-xl border px-4 text-sm transition ${
+            className={`flex h-11 w-full items-center justify-center rounded-xl border px-4 text-sm transition sm:w-auto sm:justify-start ${
               onlyEnrolled
                 ? "border-atom-accent/50 bg-atom-accent/10 text-atom-accent"
                 : "border-atom-border/80 bg-atom-deep/70 text-atom-muted hover:text-atom-text"
@@ -113,7 +113,7 @@ export default function CatalogPage() {
       </div>
 
       {courses.isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <Skeleton key={i} className="h-64 w-full" />
           ))}
@@ -123,7 +123,7 @@ export default function CatalogPage() {
           <p className="text-sm text-atom-muted">No courses match those filters.</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((c) => (
             <CourseCard key={c.id} course={c} />
           ))}

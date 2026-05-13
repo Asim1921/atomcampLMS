@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -10,6 +11,16 @@ from app.core.config import settings
 from app.db.seed import seed_from_files
 from app.db.session import SessionLocal, init_db
 from app.services.embeddings import ensure_course_embeddings
+
+# Make the AI-routing decisions visible in stdout so we can see at a glance
+# whether a request used Ollama, Gemini, or the static fallback.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+    datefmt="%H:%M:%S",
+)
+for noisy in ("httpx", "httpcore", "urllib3"):
+    logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
 @asynccontextmanager

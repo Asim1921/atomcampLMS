@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { AuthShell } from "@/components/auth-shell";
-import { GoogleButton } from "@/components/google-button";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { useAuthStore } from "@/lib/auth";
@@ -26,7 +25,6 @@ const STRENGTH_LABELS = ["Too short", "Weak", "Okay", "Strong", "Excellent"];
 export default function SignupPage() {
   const router = useRouter();
   const signup = useAuthStore((s) => s.signup);
-  const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
   const status = useAuthStore((s) => s.status);
 
   const [name, setName] = useState("");
@@ -60,19 +58,6 @@ export default function SignupPage() {
       router.replace("/onboarding");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed.");
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function onGoogle(credential: string) {
-    setError(null);
-    setPending(true);
-    try {
-      await loginWithGoogle(credential);
-      router.replace("/onboarding");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign-up failed.");
     } finally {
       setPending(false);
     }
@@ -174,14 +159,6 @@ export default function SignupPage() {
           By signing up you agree to AtomAdapt&apos;s educational use terms during this hackathon demo.
         </p>
       </form>
-
-      <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-atom-muted">
-        <span className="h-px flex-1 bg-atom-border/60" />
-        Or sign up with
-        <span className="h-px flex-1 bg-atom-border/60" />
-      </div>
-
-      <GoogleButton text="signup_with" onCredential={onGoogle} disabled={pending} />
     </AuthShell>
   );
 }

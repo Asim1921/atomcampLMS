@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.db.models import Course, Learner
+from app.api.routes.auth import get_current_user
+from app.db.models import Course, Learner, User
 from app.db.session import get_db
 from app.schemas.courses import CourseOut
 from app.schemas.learners import LearnerDNAOut, LearnerSummary
@@ -40,6 +41,8 @@ def _dna(L: Learner) -> LearnerDNAOut:
         preferred_modality=L.preferred_modality,
         struggle_topics=L.struggle_topics(),
         confidence_score=L.confidence_score,
+        quiz_avg=L.quiz_avg,
+        onboarding_completed=bool(L.onboarding_completed),
         engagement={
             "logins_last_14d": L.logins_last_14d,
             "avg_session_min": L.avg_session_min,
@@ -50,25 +53,38 @@ def _dna(L: Learner) -> LearnerDNAOut:
     )
 
 
+def _can_view_any_learner(user: User) -> bool:
+    return user.role in ("admin", "instructor")
+
+
 @router.get("/learners", response_model=list[LearnerSummary])
-def list_learners(db: Session = Depends(get_db)):
-    rows = db.query(Learner).order_by(Learner.name).all()
-    return [_summary(L) for L in rows]
+def list_learners(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    if _can_view_any_learner(user):
+        rows = db.query(Learner).order_by(Learner.name).all()
+        return [_summary(L) for L in rows]
+    if user.learner_id:
+        L = db.get(Learner, user.learner_id)
+        return [_summary(L)] if L else []
+    return []
 
 
 @router.get("/learners/{learner_id}", response_model=LearnerDNAOut)
-def get_learner(learner_id: str, db: Session = Depends(get_db)):
+def get_learner(learner_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     L = db.get(Learner, learner_id)
     if not L:
         raise HTTPException(status_code=404, detail="Learner not found")
+    if not _can_view_any_learner(user) and user.learner_id != learner_id:
+        raise HTTPException(status_code=403, detail="Not allowed to view this learner profile")
     return _dna(L)
 
 
 @router.get("/recommendations/{learner_id}", response_model=list[CourseOut])
-def recommendations(learner_id: str, db: Session = Depends(get_db)):
+def recommendations(learner_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     learner = db.get(Learner, learner_id)
     if not learner:
         raise HTTPException(status_code=404, detail="Learner not found")
+    if not _can_view_any_learner(user) and user.learner_id != learner_id:
+        raise HTTPException(status_code=403, detail="Not allowed to view recommendations for this learner")
     ranked = recommend_course_ids(db, learner, top_k=5)
     out: list[CourseOut] = []
     for cid, score in ranked:

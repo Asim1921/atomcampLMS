@@ -31,6 +31,8 @@ class LearnerDNAOut(BaseModel):
     preferred_modality: str
     struggle_topics: list[str]
     confidence_score: float
+    quiz_avg: int
+    onboarding_completed: bool
     engagement: dict
     at_risk_score: float
     has_dna_embedding: bool

@@ -9,6 +9,7 @@ import {
   Library,
   LineChart,
   LogOut,
+  Menu,
   Settings,
   Sparkles,
   User as UserIcon,
@@ -50,27 +51,46 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
 
   return (
-    <div className="flex min-h-screen bg-aurora">
-      <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-atom-border/60 bg-atom-navy/85 backdrop-blur-xl">
+    <div className="flex min-h-screen overflow-x-hidden bg-aurora">
+      {navOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-30 bg-black/55 backdrop-blur-[2px] lg:hidden"
+          onClick={() => setNavOpen(false)}
+        />
+      )}
+
+      <aside
+        className={cn(
+          // Mobile: slide-in drawer up to 18rem (capped at 88vw on very small phones).
+          // Desktop (lg+): exactly 16rem so it matches `lg:pl-64` on the content area.
+          "fixed inset-y-0 left-0 z-40 flex w-[min(18rem,88vw)] flex-col border-r border-atom-border/60 bg-atom-navy/90 backdrop-blur-xl transition-transform duration-200 ease-out lg:w-64 lg:translate-x-0",
+          navOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        )}
+      >
         <Link href="/" className="flex items-center gap-2 border-b border-atom-border/60 px-5 py-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-atom-accent to-cyan-500 text-atom-deep shadow-glow">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-atom-accent to-cyan-500 text-atom-deep shadow-glow">
             <Brain className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-atom-accent">AtomAdapt</p>
-            <p className="text-sm text-atom-muted">for atomcamp</p>
+            <p className="truncate text-sm text-atom-muted">for atomcamp</p>
           </div>
         </Link>
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3 scrollbar-thin">
           {navItems.filter((i) => visibleFor(user?.role, i)).map((item) => {
             const Icon = item.icon;
-            const active = item.prefix
-              ? pathname?.startsWith(item.prefix)
-              : pathname === item.href;
+            const active = item.prefix ? pathname?.startsWith(item.prefix) : pathname === item.href;
             return (
-              <Link key={item.href} href={item.href}>
+              <Link key={item.href} href={item.href} onClick={() => setNavOpen(false)}>
                 <span
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
@@ -90,22 +110,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <p className="mb-1 text-xs uppercase tracking-wide text-atom-muted">Role</p>
           <p className="text-sm capitalize text-atom-text">{user?.role ?? "learner"}</p>
           <p className="mt-3 flex items-center gap-1 text-xs text-atom-muted">
-            <Sparkles className="h-3 w-3 text-atom-accent" />
-            Learner DNA powers all AI surfaces
+            <Sparkles className="h-3 w-3 shrink-0 text-atom-accent" />
+            <span>Learner DNA powers all AI surfaces</span>
           </p>
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col pl-64">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-atom-border/60 bg-atom-deep/80 px-8 py-4 backdrop-blur-md">
-          <div>
-            <h1 className="text-lg font-semibold text-atom-text">Smart Adaptive LMS</h1>
-            <p className="text-sm text-atom-muted">
-              Personalized paths · instructor signals · cohort intelligence.
-            </p>
+      <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
+        <header className="sticky top-0 z-20 flex flex-col gap-3 border-b border-atom-border/60 bg-atom-deep/85 px-4 py-3 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4 lg:px-8">
+          <div className="flex min-w-0 items-start gap-3 sm:items-center">
+            <button
+              type="button"
+              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-atom-border/60 bg-atom-panel/70 text-atom-text lg:hidden"
+              aria-label="Open navigation"
+              onClick={() => setNavOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-base font-semibold text-atom-text sm:text-lg">Smart Adaptive LMS</h1>
+              <p className="text-xs text-atom-muted sm:text-sm">
+                Personalized paths · instructor signals · cohort intelligence.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="accent" className="hidden sm:inline-flex">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <Badge variant="accent" className="hidden md:inline-flex">
               atomcamp-aligned
             </Badge>
             <UserMenu
@@ -119,7 +149,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
           </div>
         </header>
-        <main className="flex-1 px-8 py-8">{children}</main>
+        <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</main>
       </div>
     </div>
   );
@@ -158,24 +188,24 @@ function UserMenu({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-xl border border-atom-border/60 bg-atom-panel/70 px-2 py-1.5 text-sm text-atom-text transition hover:border-atom-accent/40"
+        className="flex max-w-full items-center gap-2 rounded-xl border border-atom-border/60 bg-atom-panel/70 px-2 py-1.5 text-sm text-atom-text transition hover:border-atom-accent/40"
       >
         {avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatar} alt={name} className="h-7 w-7 rounded-lg object-cover" />
+          <img src={avatar} alt={name} className="h-7 w-7 shrink-0 rounded-lg object-cover" />
         ) : (
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-atom-accent to-cyan-500 text-xs font-bold text-atom-deep">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-atom-accent to-cyan-500 text-xs font-bold text-atom-deep">
             {initials || <UserIcon className="h-3.5 w-3.5" />}
           </span>
         )}
-        <span className="hidden text-left md:block">
+        <span className="hidden min-w-0 text-left md:block">
           <span className="block max-w-[140px] truncate text-xs font-semibold">{name}</span>
           <span className="block max-w-[140px] truncate text-[11px] text-atom-muted">{email}</span>
         </span>
-        <ChevronDown className="h-4 w-4 text-atom-muted" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-atom-muted" />
       </button>
       {open && (
-        <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-xl border border-atom-border/80 bg-atom-panel/95 shadow-2xl backdrop-blur">
+        <div className="absolute right-0 top-12 z-50 w-56 overflow-hidden rounded-xl border border-atom-border/80 bg-atom-panel/95 shadow-2xl backdrop-blur">
           <div className="border-b border-atom-border/60 px-3 py-3">
             <p className="text-sm font-semibold text-atom-text">{name}</p>
             <p className="truncate text-xs text-atom-muted">{email}</p>

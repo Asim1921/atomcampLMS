@@ -68,19 +68,21 @@ export default function CourseDetailPage() {
   const firstLesson = c.lessons[0];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Hero */}
       <div className="overflow-hidden rounded-3xl border border-atom-border/60 bg-gradient-to-br from-atom-panel via-atom-deep/40 to-atom-deep">
-        <div className="grid gap-6 p-8 lg:grid-cols-[1fr_280px]">
-          <div className="space-y-4">
+        <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[1fr_280px] lg:p-8">
+          <div className="min-w-0 space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-4xl">{c.cover_emoji}</span>
               <Badge variant="outline">{c.level}</Badge>
-              {c.owner_name && <span className="text-xs text-atom-muted">by {c.owner_name}</span>}
+              {c.owner_name && (
+                <span className="max-w-full truncate text-xs text-atom-muted">by {c.owner_name}</span>
+              )}
               {!c.published && <Badge variant="warn">draft</Badge>}
             </div>
-            <h1 className="text-3xl font-bold text-atom-text">{c.title}</h1>
-            <p className="text-sm text-atom-muted">{c.description}</p>
+            <h1 className="break-words text-2xl font-bold text-atom-text sm:text-3xl">{c.title}</h1>
+            <p className="break-words text-sm text-atom-muted">{c.description}</p>
             {c.audience && (
               <p className="text-xs text-atom-muted/80">
                 <span className="font-semibold text-atom-muted">Audience: </span>

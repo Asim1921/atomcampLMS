@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import { AuthShell } from "@/components/auth-shell";
-import { GoogleButton } from "@/components/google-button";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { useAuthStore } from "@/lib/auth";
@@ -25,7 +24,6 @@ function LoginInner() {
   const next = params.get("next") ?? "/learner";
 
   const login = useAuthStore((s) => s.login);
-  const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
   const status = useAuthStore((s) => s.status);
 
   const [email, setEmail] = useState("");
@@ -46,19 +44,6 @@ function LoginInner() {
       router.replace(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function onGoogle(credential: string) {
-    setError(null);
-    setPending(true);
-    try {
-      await loginWithGoogle(credential);
-      router.replace(next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign-in failed.");
     } finally {
       setPending(false);
     }
@@ -121,14 +106,6 @@ function LoginInner() {
           )}
         </Button>
       </form>
-
-      <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-atom-muted">
-        <span className="h-px flex-1 bg-atom-border/60" />
-        Or continue with
-        <span className="h-px flex-1 bg-atom-border/60" />
-      </div>
-
-      <GoogleButton text="signin_with" onCredential={onGoogle} disabled={pending} />
     </AuthShell>
   );
 }

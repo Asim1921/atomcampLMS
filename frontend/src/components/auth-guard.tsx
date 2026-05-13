@@ -5,11 +5,17 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { useAuthStore } from "@/lib/auth";
+import { useAppStore } from "@/lib/store";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const status = useAuthStore((s) => s.status);
+  const setSelectedLearnerId = useAppStore((s) => s.setSelectedLearnerId);
+
+  useEffect(() => {
+    if (status === "unauthenticated") setSelectedLearnerId(null);
+  }, [status, setSelectedLearnerId]);
 
   useEffect(() => {
     if (status === "unauthenticated") {

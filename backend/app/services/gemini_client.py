@@ -112,8 +112,24 @@ async def complete_json(
                     "response_mime_type": "application/json",
                 },
             )
+            cand = getattr(resp, "candidates", None) or []
+            if not cand:
+                fb = getattr(resp, "prompt_feedback", None)
+                logger.warning("Gemini complete_json: no candidates (blocked or empty). feedback=%s", fb)
             raw = (getattr(resp, "text", "") or "").strip()
-            return _extract_json(raw) if raw else None
+            parsed = _extract_json(raw) if raw else None
+            if parsed:
+                return parsed
+            # Some API/SDK combos return empty text with JSON mime — retry without it.
+            resp2 = m.generate_content(
+                user,
+                generation_config={
+                    "temperature": temperature,
+                    "max_output_tokens": max_output_tokens,
+                },
+            )
+            raw2 = (getattr(resp2, "text", "") or "").strip()
+            return _extract_json(raw2) if raw2 else None
         except Exception as e:
             logger.warning("Gemini complete_json failed: %s", e)
             return None

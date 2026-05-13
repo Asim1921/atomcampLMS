@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
-import { API, apiPost } from "@/lib/api";
+import { API, apiPost, getToken } from "@/lib/api";
 import type { LearnerDNA, QuizQuestion } from "@/lib/types";
 import { useAppStore } from "@/lib/store";
 
@@ -30,7 +30,10 @@ export function OnboardingWizard({ trigger }: Props) {
     mutationFn: async () => {
       const res = await fetch(`${API}/api/onboarding/diagnostic`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+        },
         body: JSON.stringify({ goal }),
       });
       if (!res.ok) throw new Error("Failed to start diagnostic");

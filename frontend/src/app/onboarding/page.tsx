@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth-guard";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { API, apiPost } from "@/lib/api";
+import { API, apiPost, getToken } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth";
 import type { LearnerDNA, QuizQuestion } from "@/lib/types";
 
@@ -39,7 +39,10 @@ function OnboardingInner() {
     mutationFn: async () => {
       const res = await fetch(`${API}/api/onboarding/diagnostic`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+        },
         body: JSON.stringify({ goal }),
       });
       if (!res.ok) throw new Error("Failed to generate quiz.");

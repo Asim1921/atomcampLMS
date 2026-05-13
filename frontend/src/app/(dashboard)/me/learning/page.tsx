@@ -17,16 +17,16 @@ export default function MyLearningPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-atom-accent">My learning</p>
           <h2 className="text-2xl font-bold tracking-tight text-atom-text sm:text-3xl">Enrolled courses</h2>
           <p className="mt-1 max-w-2xl text-sm text-atom-muted">
             Pick up where you left off. Progress feeds your Learner DNA and improves AI recommendations.
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="w-full sm:w-auto">
           <Link href="/courses">
             <BookOpen className="h-4 w-4" /> Browse catalog
           </Link>
@@ -34,7 +34,7 @@ export default function MyLearningPage() {
       </div>
 
       {enrollments.isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-64 w-full" />
           ))}
@@ -51,7 +51,7 @@ export default function MyLearningPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {enrollments.data?.map((c) => (
             <CourseCard key={c.id} course={c} />
           ))}

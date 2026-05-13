@@ -12,7 +12,6 @@ type AuthState = {
   refreshUser: () => Promise<AuthUser | null>;
   login: (email: string, password: string) => Promise<AuthUser>;
   signup: (name: string, email: string, password: string) => Promise<AuthUser>;
-  loginWithGoogle: (credential: string) => Promise<AuthUser>;
   forgotPassword: (email: string) => Promise<{ message: string }>;
   resetPassword: (email: string, code: string, newPassword: string) => Promise<{ message: string }>;
   verifyOtp: (email: string, code: string) => Promise<{ message: string }>;
@@ -66,13 +65,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   async signup(name, email, password) {
     const data = await apiPost<AuthResponse>("/api/auth/signup", { name, email, password });
-    setToken(data.token);
-    set({ user: data.user, status: "authenticated" });
-    return data.user;
-  },
-
-  async loginWithGoogle(credential) {
-    const data = await apiPost<AuthResponse>("/api/auth/google", { credential });
     setToken(data.token);
     set({ user: data.user, status: "authenticated" });
     return data.user;

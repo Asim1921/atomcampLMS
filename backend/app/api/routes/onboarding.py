@@ -20,6 +20,8 @@ def _dna_out(learner) -> LearnerDNAOut:
         preferred_modality=learner.preferred_modality,
         struggle_topics=learner.struggle_topics(),
         confidence_score=learner.confidence_score,
+        quiz_avg=learner.quiz_avg,
+        onboarding_completed=bool(learner.onboarding_completed),
         engagement={
             "logins_last_14d": learner.logins_last_14d,
             "avg_session_min": learner.avg_session_min,

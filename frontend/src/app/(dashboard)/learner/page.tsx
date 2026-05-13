@@ -17,27 +17,51 @@ import { useAuthStore } from "@/lib/auth";
 import { useAppStore } from "@/lib/store";
 import type { CourseRec, LearnerDNA, LearnerSummary } from "@/lib/types";
 
+function canPickLearner(role: string | undefined) {
+  return role === "admin" || role === "instructor";
+}
+
+/** Quiz average: API historically nested this only under `engagement`; keep a safe read. */
+function quizPct(d: LearnerDNA | undefined): number {
+  if (!d) return 0;
+  const raw = d.quiz_avg ?? d.engagement?.quiz_avg;
+  const n = typeof raw === "number" && !Number.isNaN(raw) ? raw : Number(raw);
+  return Math.min(100, Math.max(0, Number.isFinite(n) ? n : 0));
+}
+
 export default function LearnerDashboardPage() {
   const gradId = useId().replace(/:/g, "");
   const user = useAuthStore((s) => s.user);
   const selectedLearnerId = useAppStore((s) => s.selectedLearnerId);
   const setSelectedLearnerId = useAppStore((s) => s.setSelectedLearnerId);
+  const privileged = canPickLearner(user?.role);
 
   const learners = useQuery({
     queryKey: ["learners"],
     queryFn: () => apiGet<LearnerSummary[]>("/api/learners"),
+    enabled: !!user,
   });
 
   useEffect(() => {
-    if (selectedLearnerId) return;
-    if (user?.learner_id) {
-      setSelectedLearnerId(user.learner_id);
-    } else if (learners.data?.length) {
-      setSelectedLearnerId(learners.data[0].id);
+    if (!user?.id) return;
+    if (!privileged) {
+      if (user.learner_id) setSelectedLearnerId(user.learner_id);
+      else setSelectedLearnerId(null);
+      return;
     }
-  }, [learners.data, selectedLearnerId, setSelectedLearnerId, user?.learner_id]);
+    const ids = new Set((learners.data ?? []).map((L) => L.id));
+    if (selectedLearnerId && ids.size > 0 && !ids.has(selectedLearnerId)) {
+      setSelectedLearnerId(user.learner_id ?? learners.data?.[0]?.id ?? null);
+      return;
+    }
+    if (!selectedLearnerId) {
+      const fallback = user.learner_id ?? learners.data?.[0]?.id ?? null;
+      if (fallback) setSelectedLearnerId(fallback);
+    }
+  }, [user, learners.data, selectedLearnerId, setSelectedLearnerId, privileged]);
 
   const learnerId = selectedLearnerId ?? user?.learner_id ?? learners.data?.[0]?.id ?? null;
+  const showLearnerPicker = privileged && (learners.data?.length ?? 0) > 1;
 
   const dna = useQuery({
     queryKey: ["dna", learnerId],
@@ -51,10 +75,12 @@ export default function LearnerDashboardPage() {
     enabled: !!learnerId,
   });
 
+  const qPct = quizPct(dna.data);
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-atom-accent">Your dashboard</p>
           <h2 className="text-2xl font-bold tracking-tight text-atom-text sm:text-3xl">
             {user ? `Hey ${user.name.split(" ")[0]} 👋` : "Learner dashboard"}
@@ -64,9 +90,11 @@ export default function LearnerDashboardPage() {
             same personalization gap atomcamp learners feel at scale.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <OnboardingWizard trigger={<Button variant="outline">Refresh DNA (AI diagnostic)</Button>} />
-          <Button asChild variant="default">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <OnboardingWizard
+            trigger={<Button variant="outline" className="w-full sm:w-auto">Refresh DNA (AI diagnostic)</Button>}
+          />
+          <Button asChild variant="default" className="w-full sm:w-auto">
             <Link href="https://www.atomcamp.com/" target="_blank" rel="noreferrer">
               Explore atomcamp <ArrowUpRight className="h-4 w-4" />
             </Link>
@@ -75,11 +103,11 @@ export default function LearnerDashboardPage() {
       </div>
 
       {/* KPI row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         <KPI
           icon={<Trophy className="h-4 w-4" />}
           label="Quiz average"
-          value={dna.data ? `${dna.data.quiz_avg}%` : "—"}
+          value={dna.data ? `${qPct}%` : "—"}
           accent
         />
         <KPI
@@ -100,20 +128,24 @@ export default function LearnerDashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-start justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Dna className="h-5 w-5 text-atom-accent" />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="min-w-0 lg:col-span-2">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <CardTitle className="flex flex-wrap items-center gap-2">
+                <Dna className="h-5 w-5 shrink-0 text-atom-accent" />
                 Learner DNA
               </CardTitle>
               <CardDescription>Live profile: goal, level, struggles, confidence — consumed by every AI surface.</CardDescription>
             </div>
             {dna.data?.has_dna_embedding ? (
-              <Badge variant="accent">embedding active</Badge>
+              <Badge variant="accent" className="w-fit shrink-0">
+                embedding active
+              </Badge>
             ) : (
-              <Badge variant="warn">embedding pending</Badge>
+              <Badge variant="warn" className="w-fit shrink-0">
+                embedding pending
+              </Badge>
             )}
           </CardHeader>
           <CardContent className="space-y-4">
@@ -121,20 +153,28 @@ export default function LearnerDashboardPage() {
             {dna.isLoading && <Skeleton className="h-24 w-full" />}
             {dna.data && (
               <>
-                <div className="flex flex-wrap gap-2">
-                  <select
-                    className="rounded-lg border border-atom-border bg-atom-deep px-3 py-2 text-sm text-atom-text"
-                    value={learnerId ?? ""}
-                    onChange={(e) => setSelectedLearnerId(e.target.value)}
-                  >
-                    {learners.data?.map((L) => (
-                      <option key={L.id} value={L.id}>
-                        {L.name}
-                      </option>
-                    ))}
-                  </select>
-                  <Badge variant="default">{dna.data.current_skill_level}</Badge>
-                  <Badge variant="default">pace: {dna.data.pace}</Badge>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                  {showLearnerPicker ? (
+                    <select
+                      className="w-full rounded-lg border border-atom-border bg-atom-deep px-3 py-2 text-sm text-atom-text sm:max-w-xs sm:w-auto"
+                      value={learnerId ?? ""}
+                      onChange={(e) => setSelectedLearnerId(e.target.value)}
+                    >
+                      {learners.data?.map((L) => (
+                        <option key={L.id} value={L.id}>
+                          {L.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="rounded-lg border border-atom-border/60 bg-atom-deep/40 px-3 py-2 text-sm font-medium text-atom-text">
+                      {dna.data.name}
+                    </span>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="default">{dna.data.current_skill_level}</Badge>
+                    <Badge variant="default">pace: {dna.data.pace}</Badge>
+                  </div>
                 </div>
                 <p className="text-sm leading-relaxed text-atom-text">
                   {dna.data.goal || "Tell us your learning goal in the diagnostic to personalize this profile."}
@@ -158,7 +198,7 @@ export default function LearnerDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Progress pulse</CardTitle>
             <CardDescription>Quiz performance — signal for adaptive sequencing.</CardDescription>
@@ -167,7 +207,7 @@ export default function LearnerDashboardPage() {
             {dna.data && (
               <>
                 <div
-                  className="relative flex h-36 w-36 items-center justify-center rounded-full border-4 border-atom-border"
+                  className="relative flex h-32 w-32 shrink-0 items-center justify-center rounded-full border-4 border-atom-border sm:h-36 sm:w-36"
                   style={{
                     background: `conic-gradient(var(--tw-gradient-stops))`,
                   }}
@@ -178,7 +218,7 @@ export default function LearnerDashboardPage() {
                       boxShadow: "inset 0 0 40px rgba(45,212,191,0.08)",
                     }}
                   >
-                    <p className="text-3xl font-bold text-atom-accent">{dna.data.quiz_avg}%</p>
+                    <p className="text-2xl font-bold text-atom-accent sm:text-3xl">{qPct}%</p>
                     <p className="text-[10px] uppercase tracking-wider text-atom-muted">quiz avg</p>
                   </div>
                   <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 100 100">
@@ -198,7 +238,7 @@ export default function LearnerDashboardPage() {
                       fill="none"
                       stroke={`url(#atomGrad-${gradId})`}
                       strokeWidth="8"
-                      strokeDasharray={`${(dna.data.quiz_avg / 100) * 276.46} 276.46`}
+                      strokeDasharray={`${(qPct / 100) * 276.46} 276.46`}
                       strokeLinecap="round"
                     />
                     <defs>
@@ -209,7 +249,7 @@ export default function LearnerDashboardPage() {
                     </defs>
                   </svg>
                 </div>
-                <Progress value={dna.data.quiz_avg} className="w-full" />
+                <Progress value={qPct} className="w-full max-w-sm" />
               </>
             )}
             {!dna.data && <Skeleton className="h-36 w-36 rounded-full" />}
@@ -230,13 +270,13 @@ export default function LearnerDashboardPage() {
         </CardHeader>
         <CardContent>
           {recs.isLoading && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-36 w-full" />
               ))}
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {recs.data?.map((c) => (
               <div
                 key={c.id}
@@ -255,12 +295,12 @@ export default function LearnerDashboardPage() {
       </Card>
 
       <Card className="border-atom-accent/30 bg-gradient-to-br from-atom-panel to-atom-deep/60">
-        <CardContent className="flex flex-col items-start gap-3 py-6 sm:flex-row sm:items-center sm:justify-between">
+        <CardContent className="flex flex-col items-stretch gap-3 py-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-atom-text">Continue learning on atomcamp</p>
             <p className="text-sm text-atom-muted">Bootcamps in AI, Data Analytics, Automation, and Agentic AI.</p>
           </div>
-          <Button asChild>
+          <Button asChild className="w-full shrink-0 sm:w-auto">
             <Link href="https://www.atomcamp.com/" target="_blank" rel="noreferrer">
               Open atomcamp.com
             </Link>

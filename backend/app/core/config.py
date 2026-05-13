@@ -30,25 +30,48 @@ class Settings(BaseSettings):
 
     # ----- Gemini (primary LLM provider) -----
     gemini_api_key: str | None = None
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-2.5-flash"
     gemini_tutor_model: str | None = Field(default=None)  # falls back to gemini_model
-    gemini_embedding_model: str = "embedding-001"
+    gemini_embedding_model: str = "gemini-embedding-001"
+
+    @field_validator("gemini_model", "gemini_tutor_model", mode="before")
+    @classmethod
+    def _normalize_gemini_generative_model(cls, v: object) -> str | None:
+        """Map legacy model IDs that return 404 on current v1beta to a supported Flash model."""
+        if v is None:
+            return None
+        if isinstance(v, str) and not v.strip():
+            return None
+        if not isinstance(v, str):
+            return None
+        s = v.strip().removeprefix("models/").strip().strip('"').strip("'")
+        low = s.lower()
+        if "gemini-1.5" in low or low in ("gemini-pro", "gemini-1.0-pro", "gemini-pro-vision"):
+            return "gemini-2.5-flash"
+        return s
 
     @field_validator("gemini_embedding_model", mode="before")
     @classmethod
     def _normalize_gemini_embedding_model(cls, v: object) -> str:
-        """google-generativeai embed_content rejects text-embedding-004 on v1beta for many keys — use embedding-001."""
+        """Use a model id that embed_content accepts (see genai.list_models())."""
         if v is None or (isinstance(v, str) and not v.strip()):
-            return "embedding-001"
+            return "gemini-embedding-001"
         if not isinstance(v, str):
-            return "embedding-001"
+            return "gemini-embedding-001"
         s = v.strip().removeprefix("models/").strip().strip('"').strip("'")
         if not s:
-            return "embedding-001"
+            return "gemini-embedding-001"
         key = s.lower().replace("_", "").replace("-", "")
-        if key in ("textembedding004", "textembedding004latest"):
-            return "embedding-001"
+        if key in ("textembedding004", "textembedding004latest", "embedding001"):
+            return "gemini-embedding-001"
         return s
+
+    # ----- Ollama (local LLM — preferred for onboarding diagnostic) -----
+    # Default points at a local server. Set OLLAMA_BASE_URL=disabled to force-skip Ollama.
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3.1:latest"
+    # Seconds before we give up waiting on Ollama (an 8B model on a typical laptop can take 30-90s).
+    ollama_timeout_seconds: float = 180.0
 
     # ----- OpenAI (deprecated — kept for backward compatibility; unused by Gemini code paths) -----
     openai_api_key: str | None = None

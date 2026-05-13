@@ -61,17 +61,17 @@ export default function InstructorDashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-atom-text">Instructor command center</h2>
-        <p className="mt-1 max-w-2xl text-sm text-atom-muted">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="min-w-0">
+        <h2 className="text-2xl font-bold tracking-tight text-atom-text sm:text-3xl">Instructor command center</h2>
+        <p className="mt-1 max-w-2xl break-words text-sm text-atom-muted">
           At-risk scores from a trained scikit-learn LogisticRegression on engagement features (artifact:{" "}
-          <code className="rounded bg-atom-panel px-1">ml/artifacts/risk_model.pkl</code>). Interventions combine DNA +
+          <code className="break-all rounded bg-atom-panel px-1">ml/artifacts/risk_model.pkl</code>). Interventions combine DNA +
           risk context for an LLM-generated draft message.
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Engagement vs risk (sample)</CardTitle>

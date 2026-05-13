@@ -35,10 +35,10 @@ export function TutorDrawer({ learnerId }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-atom-accent to-cyan-500 text-atom-deep shadow-glow transition hover:scale-105"
+        className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-atom-accent to-cyan-500 text-atom-deep shadow-glow transition hover:scale-105 sm:bottom-8 sm:right-8 sm:h-14 sm:w-14"
         aria-label="Open AI tutor"
       >
-        <MessageCircle className="h-7 w-7" />
+        <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
       </button>
       {open && (
         <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-atom-border bg-atom-navy shadow-2xl">
