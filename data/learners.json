@@ -1,0 +1,58 @@
+[
+  {
+    "id": "learner_001",
+    "name": "Ayesha Khan",
+    "goal": "Become a job-ready frontend developer in 3 months",
+    "current_skill_level": "beginner",
+    "pace": "steady",
+    "preferred_modality": "video + projects",
+    "struggle_topics": ["JavaScript async", "CSS layouts"],
+    "confidence_score": 0.52,
+    "engagement": { "logins_last_14d": 6, "avg_session_min": 28, "quiz_avg": 62 }
+  },
+  {
+    "id": "learner_002",
+    "name": "Ahmed Raza",
+    "goal": "Switch to data analytics and get freelance gigs",
+    "current_skill_level": "beginner",
+    "pace": "slow",
+    "preferred_modality": "reading + practice",
+    "struggle_topics": ["statistics basics", "SQL joins"],
+    "confidence_score": 0.41,
+    "engagement": { "logins_last_14d": 3, "avg_session_min": 14, "quiz_avg": 48 }
+  },
+  {
+    "id": "learner_003",
+    "name": "Hassan Ali",
+    "goal": "Learn FastAPI to build backend APIs for my app idea",
+    "current_skill_level": "intermediate",
+    "pace": "fast",
+    "preferred_modality": "projects",
+    "struggle_topics": ["auth flows", "db migrations"],
+    "confidence_score": 0.67,
+    "engagement": { "logins_last_14d": 10, "avg_session_min": 42, "quiz_avg": 74 }
+  },
+  {
+    "id": "learner_004",
+    "name": "Sara Iqbal",
+    "goal": "Prepare for software interviews (DSA) while studying",
+    "current_skill_level": "intermediate",
+    "pace": "steady",
+    "preferred_modality": "practice + feedback",
+    "struggle_topics": ["graphs", "dynamic programming"],
+    "confidence_score": 0.58,
+    "engagement": { "logins_last_14d": 8, "avg_session_min": 35, "quiz_avg": 69 }
+  },
+  {
+    "id": "learner_005",
+    "name": "Bilal Ahmed",
+    "goal": "Build AI features using embeddings and LLMs",
+    "current_skill_level": "intermediate",
+    "pace": "fast",
+    "preferred_modality": "projects + docs",
+    "struggle_topics": ["evaluation", "prompt robustness"],
+    "confidence_score": 0.64,
+    "engagement": { "logins_last_14d": 9, "avg_session_min": 39, "quiz_avg": 71 }
+  }
+]
+

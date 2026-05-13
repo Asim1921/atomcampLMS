@@ -1,0 +1,135 @@
+[
+  {
+    "id": "ac-atom-ai-bootcamp",
+    "title": "Artificial Intelligence Bootcamp (atomcamp)",
+    "description": "Three-month intensive: Business Intelligence, Machine Learning, Deep Learning, LLMs, NLP, Computer Vision, Generative AI — aligned with atomcamp's AI bootcamp track for STEM graduates.",
+    "audience": "Technical professionals and fresh graduates (STEM) upskilling into AI roles across Pakistan and beyond.",
+    "prerequisites": ["STEM or technical background", "Willingness to code daily"]
+  },
+  {
+    "id": "ac-atom-data-analytics",
+    "title": "Data Analytics Bootcamp (atomcamp)",
+    "description": "Excel, Power BI, SQL, Python, practical ML basics, freelancing readiness — mirrors atomcamp's analytics track for non-technical and career-switching learners.",
+    "audience": "Non-technical backgrounds or any academic discipline seeking job-ready analytics skills.",
+    "prerequisites": ["Laptop access", "Basic computer literacy"]
+  },
+  {
+    "id": "ac-atom-automation-ai",
+    "title": "Automation with AI Bootcamp (atomcamp)",
+    "description": "Six-week live program to automate repetitive work with industry tools — matches atomcamp's automation offering for working professionals.",
+    "audience": "Working professionals deploying AI in daily workflows.",
+    "prerequisites": ["No prior analytics experience required"]
+  },
+  {
+    "id": "ac-atom-agentic-ai",
+    "title": "Agentic AI Bootcamp (atomcamp)",
+    "description": "Two-month hands-on path to build and deploy personalized AI agents — reflects atomcamp's Agentic AI cohort model.",
+    "audience": "Builders turning agent ideas into production-style assistants.",
+    "prerequisites": ["Comfort with APIs and basic Python or JS"]
+  },
+  {
+    "id": "ac-fullstack-web",
+    "title": "Full-Stack Web Development Bootcamp",
+    "description": "Build production-grade web apps with HTML/CSS, JavaScript/TypeScript, React, Node, APIs, and databases.",
+    "audience": "Beginners to intermediate learners who want job-ready web development skills.",
+    "prerequisites": ["Basic computer literacy", "Comfort with learning new tools"]
+  },
+  {
+    "id": "ac-frontend-react",
+    "title": "Frontend Engineering (React + TypeScript)",
+    "description": "Modern frontend with React, Next.js concepts, TypeScript, state management, and performance.",
+    "audience": "Learners who want to specialize in frontend engineering.",
+    "prerequisites": ["JavaScript fundamentals", "Basic HTML/CSS"]
+  },
+  {
+    "id": "ac-backend-fastapi",
+    "title": "Backend APIs with FastAPI",
+    "description": "Design and build fast APIs with FastAPI, Pydantic, authentication, and database integration.",
+    "audience": "Developers aiming to build backend services quickly in Python.",
+    "prerequisites": ["Python fundamentals", "HTTP basics"]
+  },
+  {
+    "id": "ac-data-science",
+    "title": "Data Science Bootcamp",
+    "description": "Data analysis, pandas, visualization, basic statistics, and practical ML workflows.",
+    "audience": "Learners transitioning into data roles.",
+    "prerequisites": ["Python basics", "High school math"]
+  },
+  {
+    "id": "ac-ml-foundations",
+    "title": "Machine Learning Foundations",
+    "description": "Supervised learning, model evaluation, feature engineering, and scikit-learn best practices.",
+    "audience": "Aspiring ML practitioners who want strong fundamentals.",
+    "prerequisites": ["Python basics", "Linear algebra basics helpful"]
+  },
+  {
+    "id": "ac-ai-engineering",
+    "title": "AI Engineering (LLMs + Retrieval)",
+    "description": "Build LLM apps with embeddings, RAG, prompt engineering, and evaluation for real products.",
+    "audience": "Developers building AI features into apps.",
+    "prerequisites": ["Python or JavaScript", "API fundamentals"]
+  },
+  {
+    "id": "ac-genai-rag",
+    "title": "GenAI: RAG for Real Apps",
+    "description": "Semantic search with embeddings, chunking, vector stores, and grounded chat assistants.",
+    "audience": "Teams shipping LLM features safely.",
+    "prerequisites": ["Python basics", "Understanding of REST APIs"]
+  },
+  {
+    "id": "ac-cloud-devops",
+    "title": "Cloud & DevOps Essentials",
+    "description": "Docker, CI/CD fundamentals, deployments, logs/metrics, and production readiness.",
+    "audience": "Developers who want to deploy and operate apps.",
+    "prerequisites": ["Basic command line", "Any programming language"]
+  },
+  {
+    "id": "ac-git-github",
+    "title": "Git & GitHub for Teams",
+    "description": "Branching, pull requests, code reviews, and collaboration workflows.",
+    "audience": "Beginners working in teams.",
+    "prerequisites": ["None"]
+  },
+  {
+    "id": "ac-dsa",
+    "title": "DSA Interview Prep",
+    "description": "Data structures, algorithms, problem solving patterns, and interview practice.",
+    "audience": "Students preparing for technical interviews.",
+    "prerequisites": ["Programming fundamentals"]
+  },
+  {
+    "id": "ac-mobile-flutter",
+    "title": "Mobile App Development (Flutter)",
+    "description": "Build cross-platform mobile apps with Flutter, state management, and APIs.",
+    "audience": "Learners who want to ship mobile apps quickly.",
+    "prerequisites": ["Programming fundamentals"]
+  },
+  {
+    "id": "ac-ui-ux",
+    "title": "UI/UX for Product Builders",
+    "description": "Design thinking, UX research basics, wireframing, and practical UI patterns.",
+    "audience": "Developers and founders improving product usability.",
+    "prerequisites": ["None"]
+  },
+  {
+    "id": "ac-sql",
+    "title": "SQL & Databases",
+    "description": "Relational modeling, SQL queries, indexes, and practical data work for apps.",
+    "audience": "Developers working with databases.",
+    "prerequisites": ["None"]
+  },
+  {
+    "id": "ac-python",
+    "title": "Python Programming",
+    "description": "Python fundamentals, functions, modules, and building small projects.",
+    "audience": "Beginners starting with Python.",
+    "prerequisites": ["None"]
+  },
+  {
+    "id": "ac-javascript",
+    "title": "JavaScript Fundamentals",
+    "description": "Core JavaScript, DOM basics, async programming, and building interactive pages.",
+    "audience": "Beginners starting web development.",
+    "prerequisites": ["None"]
+  }
+]

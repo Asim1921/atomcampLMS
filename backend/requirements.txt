@@ -1,0 +1,15 @@
+# AtomAdapt API + AI/ML (Google Gemini for chat/embeddings; sklearn for risk + TF-IDF)
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.8.2
+pydantic-settings==2.4.0
+email-validator==2.2.0
+python-dotenv==1.0.1
+sqlalchemy==2.0.32
+google-generativeai==0.8.3
+# OpenAI kept only because legacy demo fallbacks reference it; the active LLM path is Gemini.
+openai==1.40.6
+numpy==2.0.2
+pandas==2.2.2
+scikit-learn==1.5.1
+python-multipart==0.0.9

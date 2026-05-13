@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #070f1a;
+  --foreground: #e8f1fc;
+  --card: #111f33;
+  --card-border: #1e3a5f;
+  --accent: #2dd4bf;
+  --accent-2: #38bdf8;
+  --muted: #8ba3be;
+}
+
+html,
+body {
+  color: var(--foreground);
+  background: var(--background);
+  min-height: 100vh;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.bg-grid {
+  background-image: linear-gradient(rgba(45, 212, 191, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 212, 191, 0.045) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.bg-grid-dense {
+  background-image: linear-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Soft radial vignette used on auth + landing pages */
+.bg-aurora {
+  background:
+    radial-gradient(ellipse 80% 60% at 15% -10%, rgba(45, 212, 191, 0.22), transparent 60%),
+    radial-gradient(ellipse 70% 55% at 90% 10%, rgba(56, 189, 248, 0.18), transparent 60%),
+    radial-gradient(ellipse 60% 80% at 50% 110%, rgba(99, 102, 241, 0.14), transparent 60%),
+    #050b14;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Slow float used on hero orbs */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-14px); }
+}
+
+.animate-floaty { animation: floaty 9s ease-in-out infinite; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.text-shimmer {
+  background: linear-gradient(90deg, #e8f1fc 0%, #2dd4bf 35%, #38bdf8 65%, #e8f1fc 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+/* Custom scrollbar inside dark cards */
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(45, 212, 191, 0.25);
+  border-radius: 999px;
+}
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
+/* Subtle glass border util */
+.glass {
+  background: linear-gradient(180deg, rgba(17, 31, 51, 0.7), rgba(12, 25, 41, 0.55));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}

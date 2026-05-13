@@ -1,0 +1,41 @@
+# ----- Secrets & local env (never commit) -----
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# ----- IDE / local tooling -----
+.claude/
+.cursor/
+
+# ----- Python -----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+backend/.venv/
+backend/venv/
+.venv/
+venv/
+
+# ----- Node / Next.js -----
+frontend/.next/
+frontend/node_modules/
+frontend/out/
+node_modules/
+
+# ----- Local data & DB -----
+*.sqlite3
+*.db
+data/*.pkl
+data/*.joblib
+data/uploads/
