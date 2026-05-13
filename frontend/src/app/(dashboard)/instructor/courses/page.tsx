@@ -5,15 +5,14 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  Lock,
   Pencil,
   Plus,
-  Sparkles,
   Trash2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,12 +24,8 @@ import { useAuthStore } from "@/lib/auth";
 import type { CourseSummary } from "@/lib/types";
 
 export default function InstructorCoursesPage() {
-  const router = useRouter();
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
-  const becomeInstructor = useAuthStore((s) => s.becomeInstructor);
-  const [promoting, setPromoting] = useState(false);
-  const [promoteError, setPromoteError] = useState<string | null>(null);
 
   const isInstructor = user?.role === "instructor" || user?.role === "admin";
 
@@ -56,52 +51,24 @@ export default function InstructorCoursesPage() {
     },
   });
 
-  useEffect(() => {
-    setPromoteError(null);
-  }, [isInstructor]);
-
   if (!isInstructor) {
     return (
       <div className="mx-auto max-w-xl">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-atom-accent" />
-              Author courses on AtomAdapt
+              <Lock className="h-5 w-5 text-atom-muted" />
+              Instructors only
             </CardTitle>
             <CardDescription>
-              Become an instructor to publish your own bootcamps, add lessons, and ship quizzes
-              that feed directly into the Learner DNA model.
+              Course authoring on AtomCamp LMS is available to instructors and admins.
+              If you should have author access, contact an admin to be upgraded.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <ul className="space-y-2 text-sm text-atom-muted">
-              <li>· Create unlimited courses with rich markdown lessons</li>
-              <li>· Auto-graded MCQ quizzes that update each learner&apos;s DNA</li>
-              <li>· Real-time enrollment + progress dashboards (coming next)</li>
-            </ul>
-            {promoteError && <p className="text-sm text-atom-danger">{promoteError}</p>}
-            <Button
-              className="w-full"
-              disabled={promoting}
-              onClick={async () => {
-                setPromoteError(null);
-                setPromoting(true);
-                try {
-                  await becomeInstructor();
-                  router.refresh();
-                } catch (err) {
-                  setPromoteError(err instanceof Error ? err.message : "Failed to promote.");
-                } finally {
-                  setPromoting(false);
-                }
-              }}
-            >
-              {promoting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Become an instructor"}
+          <CardContent>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/learner">Back to your dashboard</Link>
             </Button>
-            <p className="text-[11px] text-atom-muted">
-              Demo-grade promotion — in production this would require admin approval or verification.
-            </p>
           </CardContent>
         </Card>
       </div>

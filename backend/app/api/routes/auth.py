@@ -330,12 +330,3 @@ def patch_me(
     return _user_out(user)
 
 
-@router.post("/become-instructor", response_model=UserOut)
-def become_instructor(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Demo-grade role promotion so any signed-in user can author courses for the hackathon judging."""
-    if user.role == "learner":
-        user.role = "instructor"
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    return _user_out(user)

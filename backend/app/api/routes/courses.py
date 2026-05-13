@@ -2,8 +2,9 @@
 
 Authorization model:
   - GET catalog / GET single course: open to anyone signed in.
-  - POST/PUT/DELETE on a course: must be the course owner OR an admin.
-  - Promoting yourself to instructor: POST /api/auth/become-instructor (separate route).
+  - POST a new course: must already be an instructor or admin.
+  - PUT/DELETE on a course: must be the course owner (instructor) OR an admin.
+  - Learners cannot author. Admins promote users to `instructor` directly in the DB / admin tools.
 """
 
 from __future__ import annotations

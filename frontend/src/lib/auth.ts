@@ -15,7 +15,6 @@ type AuthState = {
   forgotPassword: (email: string) => Promise<{ message: string }>;
   resetPassword: (email: string, code: string, newPassword: string) => Promise<{ message: string }>;
   verifyOtp: (email: string, code: string) => Promise<{ message: string }>;
-  becomeInstructor: () => Promise<AuthUser>;
   logout: () => void;
 };
 
@@ -84,12 +83,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   async verifyOtp(email, code) {
     return apiPost<{ message: string }>("/api/auth/verify-otp", { email, code });
-  },
-
-  async becomeInstructor() {
-    const user = await apiPost<AuthUser>("/api/auth/become-instructor", {});
-    set({ user });
-    return user;
   },
 
   logout() {

@@ -36,8 +36,8 @@ const navItems: NavItem[] = [
   { href: "/learner", label: "Dashboard", icon: GraduationCap },
   { href: "/courses", label: "Catalog", icon: Library, prefix: "/courses" },
   { href: "/me/learning", label: "My Learning", icon: BookOpen },
-  { href: "/instructor/courses", label: "Author", icon: Wrench, prefix: "/instructor/courses" },
-  { href: "/instructor", label: "Instructor", icon: LayoutDashboard, prefix: "/instructor" },
+  { href: "/instructor/courses", label: "Author", icon: Wrench, prefix: "/instructor/courses", roles: ["instructor", "admin"] },
+  { href: "/instructor", label: "Instructor", icon: LayoutDashboard, prefix: "/instructor", roles: ["instructor", "admin"] },
   { href: "/admin", label: "Admin", icon: LineChart, prefix: "/admin", roles: ["admin"] },
 ];
 
