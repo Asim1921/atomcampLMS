@@ -2,6 +2,13 @@
 
 > Inter-University National AI Hackathon submission — Bahria School of Engineering and Applied Sciences.
 
+
+# Author Names
+# Ahmed Asim Zaman
+# Muhammad ABuzar
+
+
+
 ## The Problem
 
 atomcamp learners are treated identically despite vastly different goals, paces, and backgrounds. Instructors lack visibility into who is struggling. AtomAdapt unifies goals, progress, feedback, and outcomes into a single AI-driven system.
@@ -14,8 +21,8 @@ Every learner has a continuously updated profile — an embedding plus structure
 
 | Feature | AI component |
 |--------|----------------|
-| Onboarding diagnostic | OpenAI chat (JSON quiz + scoring) with offline quiz fallback |
-| Personalized course feed | OpenAI `text-embedding-3-small` + cosine; else **TF–IDF** + cosine; else keyword |
+| Onboarding diagnostic | Gemini chat (JSON quiz + scoring) with offline quiz fallback |
+| Personalized course feed | Gemini `gemini-embedding-001` + cosine; else **TF–IDF** + cosine; else keyword |
 | AI Tutor | Streaming chat with Learner DNA in system prompt |
 | At-risk scoring | **scikit-learn** `HistGradientBoostingClassifier` (`ml/artifacts/risk_model.pkl`) |
 | Course match (no API) | **scikit-learn** `TfidfVectorizer` + cosine (`ml/artifacts/recommend_tfidf.pkl`) |
@@ -26,7 +33,7 @@ Every learner has a continuously updated profile — an embedding plus structure
 
 - **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind, Radix-based UI, Recharts, TanStack Query, Zustand
 - **Backend:** FastAPI, SQLAlchemy, SQLite
-- **AI/ML:** OpenAI API, scikit-learn, numpy/pandas
+- **AI/ML:** Google Gemini API (+ optional local Ollama), scikit-learn, numpy/pandas
 
 ## Monorepo
 
@@ -38,87 +45,97 @@ Every learner has a continuously updated profile — an embedding plus structure
 /scripts         Windows helpers + model training
 ```
 
-## Environment
+## Prerequisites
 
-Copy `.env.example` to `.env` at the **repo root** and set:
+Install these before you run anything:
 
-| Variable | Purpose |
-|----------|---------|
-| `OPENAI_API_KEY` | Enables LLM + embeddings + streaming tutor (optional for demo; fallbacks exist) |
-| `OPENAI_MODEL` | Default `gpt-4o-mini` (onboarding, interventions, admin) |
-| `OPENAI_TUTOR_MODEL` | Optional; if unset, tutor uses `OPENAI_MODEL`. Set `gpt-4o` for higher-quality tutoring (cost/latency). |
-| `OPENAI_EMBEDDING_MODEL` | Default `text-embedding-3-small` |
-| `FRONTEND_ORIGIN` | CORS, default `http://localhost:3000` |
-| `ATOMADAPT_ROOT` | **Docker only** — repo root inside container (`/repo`) |
-| `AUTH_SECRET_KEY` | HMAC secret for signed session tokens — **change in prod** |
-| `GOOGLE_CLIENT_ID` | Web client ID from Google Cloud Console (also set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in the frontend) |
-| `SMTP_HOST/PORT/USER/PASSWORD/FROM` | Email config for forgot-password. Gmail App Password works out of the box. |
+- **Python 3.11+** — <https://www.python.org/downloads/> (tick "Add python.exe to PATH")
+- **Node.js 18+ LTS** — <https://nodejs.org/> (includes `npm`)
+- **Git** — <https://git-scm.com/>
+- *(Optional)* **Ollama** for local LLM — <https://ollama.com>, then `ollama pull llama3.1`
 
-### Google OAuth setup
+## Environment Setup
 
-1. Google Cloud Console → APIs & Services → Credentials → **Create OAuth client ID** (Web application).
-2. Add `http://localhost:3000` to **Authorized JavaScript origins**.
-3. Copy the client ID into both `GOOGLE_CLIENT_ID` (backend `.env`) and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (frontend env).
-4. The frontend renders the official Google Identity Services button, which sends a verified ID token to `POST /api/auth/google`.
-
-### Forgot-password email setup
-
-1. Use a Gmail account with 2-Step Verification enabled.
-2. Generate an App Password at <https://myaccount.google.com/apppasswords>.
-3. Set `SMTP_USER` to the gmail address, `SMTP_PASSWORD` to the 16-char app password, and `SMTP_FROM` to the same address.
-4. If SMTP is **not** configured, `/api/auth/forgot-password` returns a one-time `debug_reset_token` so the demo flow stays end-to-end.
-
-## Quick Start (Windows)
-
-### PowerShell execution policy
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-# or one-shot:
-powershell -ExecutionPolicy Bypass -File D:\Aurex2k26\scripts\run-dev.ps1
-```
-
-### Train / refresh risk model (optional)
+The backend reads a single `.env` file at the **repo root** (`d:\Aurex2k26\.env`).
 
 ```powershell
 cd D:\Aurex2k26
-python scripts/train_risk_model.py
+Copy-Item .env.example .env
 ```
 
-### Run backend + frontend
+Open `.env` and fill in **at minimum**:
+
+| Variable | Why you need it |
+|----------|-----------------|
+| `GEMINI_API_KEY` | Powers the AI tutor, onboarding diagnostic, and admin insights. Get a free key at <https://aistudio.google.com/apikey>. |
+| `AUTH_SECRET_KEY` | Signs session tokens. The default works for local dev — **change for any deployment**. |
+| `GOOGLE_CLIENT_ID` *(optional)* | Enables Google sign-in. Also paste the same value into `NEXT_PUBLIC_GOOGLE_CLIENT_ID`. |
+| `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM` *(optional)* | Enables forgot-password emails. Use a Gmail App Password (<https://myaccount.google.com/apppasswords>). |
+| `OLLAMA_BASE_URL` *(optional)* | Set to `http://localhost:11434` if running Ollama locally; set to `disabled` to force Gemini only. |
+
+> No keys yet? You can still run the app — onboarding, recommendations, and risk scoring all have offline fallbacks (TF-IDF + sklearn).
+
+---
+
+## Run the App (Windows — one command)
+
+From the repo root in PowerShell:
 
 ```powershell
 cd D:\Aurex2k26
 .\scripts\run-dev.ps1
 ```
 
-- **Site:** http://localhost:3000  
-- **API docs:** http://localhost:8000/docs  
-- **Health:** http://localhost:8000/api/status  
+This script will:
 
-### Docker (backend only)
+1. Create the Python venv at `backend\.venv` (first run only) and install requirements.
+2. Install frontend `node_modules` (first run only).
+3. Open a **new PowerShell window** running the backend (`uvicorn` on port 8000).
+4. Run the frontend (`next dev` on port 3000) in the current window.
+
+Once both are up, open:
+
+- **App:** <http://localhost:3000>
+- **API docs (Swagger):** <http://localhost:8000/docs>
+- **Health check:** <http://localhost:8000/api/status>
+
+**Seeded instructor login** (created automatically on first boot):
+
+- Email: `staff@atomcamp.com`
+- Password: `atomcamp-demo-2026`
+
+### If PowerShell blocks the script
 
 ```powershell
-cd D:\Aurex2k26
-docker compose up --build
+# One-time fix (recommended):
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+# Or run it once without changing policy:
+powershell -ExecutionPolicy Bypass -File D:\Aurex2k26\scripts\run-dev.ps1
 ```
 
-Mounts `./data` to `/repo/data` so SQLite persists.
+---
 
-## Manual dev
+## Run the App (manual — two terminals)
 
-**Backend**
+Use this if you prefer to run the backend and frontend yourself, or you're not on Windows.
+
+### Terminal 1 — Backend (FastAPI on port 8000)
 
 ```powershell
 cd D:\Aurex2k26\backend
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1          # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-$env:PYTHONPATH="D:\Aurex2k26\backend"
 uvicorn app.main:app --reload --port 8000
 ```
 
-**Frontend**
+The first boot will:
+
+- Create `data/aurex.db` (SQLite).
+- Seed sample courses, learners, and the `staff@atomcamp.com` instructor.
+
+### Terminal 2 — Frontend (Next.js on port 3000)
 
 ```powershell
 cd D:\Aurex2k26\frontend
@@ -126,13 +143,50 @@ npm install
 npm run dev
 ```
 
+Now open <http://localhost:3000>.
+
+---
+
+## Optional: train / refresh the at-risk model
+
+```powershell
+cd D:\Aurex2k26
+python scripts/train_risk_model.py
+```
+
+Writes `ml/artifacts/risk_model.pkl` and `ml/artifacts/recommend_tfidf.pkl`. The repo already ships trained artifacts — only re-run after changing the training data.
+
+---
+
+## Docker (backend only)
+
+```powershell
+cd D:\Aurex2k26
+docker compose up --build
+```
+
+Mounts `./data` to `/repo/data` so SQLite persists between runs. The frontend still has to be started manually with `npm run dev`.
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| `npm not found` | Install Node.js LTS, then **close and reopen** the terminal so `PATH` refreshes. |
+| `python` opens the Microsoft Store | Install Python from python.org and check "Add to PATH", or run with the full path `C:\Users\<you>\AppData\Local\Programs\Python\Python311\python.exe`. |
+| `ModuleNotFoundError: app` | Run `uvicorn` from `D:\Aurex2k26\backend`, not from the repo root. |
+| Port 3000 / 8000 already in use | `Get-NetTCPConnection -LocalPort 3000` then `Stop-Process -Id <pid>`. |
+| AI tutor returns generic text | Check `GEMINI_API_KEY` is set in the **repo-root** `.env` and restart the backend. |
+| Google sign-in button missing | Set both `GOOGLE_CLIENT_ID` (backend) and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (frontend) to the same web client ID. |
+
 ## Architecture (ASCII)
 
 ```
 ┌──────────────┐     REST/SSE      ┌─────────────────────────────────┐
 │  Next.js UI  │ ◄──────────────► │ FastAPI                          │
 │ 3 dashboards │                  │ ├─ SQLite (learners, courses)    │
-│ + onboarding │                  │ ├─ OpenAI (LLM, embeddings)      │
+│ + onboarding │                  │ ├─ Gemini (LLM, embeddings)      │
 └──────────────┘                  │ ├─ sklearn (HGBDT + TF–IDF)      │
                                   │ └─ prompts.py (central prompts)  │
                                   └─────────────────────────────────┘
